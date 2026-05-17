@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
 $username = "root";
-$password = "";
+$password = ""; // XAMPP default root password is empty
 $dbname = "menubar";
 
 // Create connection
@@ -9,12 +9,10 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 
 // Check connection
 if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+  die("Database connection failed. Start MySQL in XAMPP and verify credentials. Error: " . $conn->connect_error);
 }
 
-$sql = "SELECT ID, MENU FROM menu where ID = 1";
-
-$query = $conn->query($sql);
-
-$menubar = mysqli_fetch_assoc($query);
+if (session_status() === PHP_SESSION_NONE) {
+  session_start();
+}
 ?>
