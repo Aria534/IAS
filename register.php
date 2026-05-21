@@ -1,5 +1,5 @@
 <?php
-$conn = new mysqli("localhost", "root","", "menubar");
+$conn = new mysqli("localhost", "root", "", "menubar");
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 if (session_status() === PHP_SESSION_NONE) session_start();
 
@@ -15,6 +15,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
         $error = "Please fill in all fields.";
     } elseif ($reg_pass !== $reg_pass2) {
         $error = "Passwords do not match.";
+    } elseif (strlen($reg_pass) < 6) {
+        $error = "Password must be at least 6 characters.";
     } else {
         $check = $conn->prepare("SELECT id FROM users WHERE username = ?");
         $check->bind_param("s", $reg_user);
@@ -23,7 +25,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
         if ($check->num_rows > 0) {
             $error = "Username already taken.";
         } else {
-            $hashed = md5($reg_pass);
+            // ✅ Secure bcrypt hashing — password_verify() ang gamiton sa login
+            $hashed = password_hash($reg_pass, PASSWORD_BCRYPT);
             $ins = $conn->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
             $ins->bind_param("ss", $reg_user, $hashed);
             $ins->execute();
@@ -73,7 +76,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
             cursor: pointer; font-size: 1rem;
         }
         .btn:hover { background: #1a5f8a; }
-        .error { color: red; font-size: 0.85rem; margin-bottom: 12px; }
+        .error {
+            color: #fff; background: #e74c3c;
+            font-size: 0.85rem; margin-bottom: 12px;
+            padding: 8px 12px; border-radius: 5px; text-align: center;
+        }
         .login-link {
             text-align: center;
             margin-top: 16px;
@@ -91,7 +98,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'regis
 <div class="box">
     <div class="form-header"><h2>Register</h2></div>
     <div class="form-body">
-        <?php if ($error): ?><div class="error"><?= htmlspecialchars($error) ?></div><?php endif; ?>
+        <?php if ($error): ?>
+            <div class="error">⚠️ <?= htmlspecialchars($error) ?></div>
+        <?php endif; ?>
 
         <form method="POST" autocomplete="off">
             <input type="hidden" name="action" value="register">
